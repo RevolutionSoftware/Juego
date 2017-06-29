@@ -812,12 +812,15 @@ checkSubMenu:
 
 ;############################################# NUMBER CONVERSION ##############################################
 
-;#######################
-;#NUMBERTOSTRING
-;#Convert number in HL to a string
-;#input: hl = number to display
-;#output: hl = pointer to string
-;#######################
+;----------------
+;numberToString:
+;	Convert number in HL to a string
+;----------------
+;input:
+; hl =	number to display
+;output:
+; hl =	pointer to string
+;----------------
 numberToString:
 	exx
 		ld de,numberString	;for the ldi in dN_b2dloop
@@ -833,13 +836,13 @@ numberToString:
 	ld de,-1		;single digits
 	call dN_b2d
 
-	ld c,-1				;this part here removes the leading 0s
-	ld hl,numberString-1  ;where the string is stored
+	; remove the leading zeros
+	ld hl,numberString-1	; where the string is stored
 nTS_clearZeros:
 	inc hl
-		ld a,(hl)
-		cp '0'			;ten ($0A) is the value of 0 in my alphabet (i think ASCII uses $30?)
-	 jr z,$-4		;repeat until we find a non-zero number
+		ld a,(hl)			; a = digit
+		cp '0'				; check if we're still in the preceding 0's
+	 jr z,$-4				; repeat until we find a non-zero number
 	or a
 	 jr nz,$+3
 		dec hl
@@ -857,15 +860,20 @@ dN_b2dloop:
 		add a,$30
 		ld (de),a
 		inc de
+		xor a
+		ld (de),a
 	exx
 	ret
 
-;#######################
-;#BIGNUMBERTOSTRING
-;# Convert number in AHL to a string
-;# input: ahl = number to display
-;# output: hl = pointer to converted string
-;#######################
+;----------------
+;numberToString:
+;	Convert number in AHL to a string
+;----------------
+;input:
+; ahl =	number to display
+;output:
+; hl =	pointer to string
+;----------------
 bigNumberToString:
 	ld ix,bigNumberString	;where we will store the result
 ;-10,000,000
@@ -922,6 +930,7 @@ b2dLoop:
 	set 5,b			;b+$30
 	ld (ix),b
 	inc ix
+	ld (ix),0
 	ret
 
 cursor:
