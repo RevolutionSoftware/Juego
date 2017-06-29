@@ -834,34 +834,15 @@ numberToString:
 	call dN_b2d
 
 	ld c,-1				;this part here removes the leading 0s
-;	ld hl,numberString  ;where the string is stored
-;	push hl
 	ld hl,numberString-1  ;where the string is stored
-			inc hl
-			ld a,(hl)
-			cp '0'			;ten ($0A) is the value of 0 in my alphabet (i think ASCII uses $30?)
-		 jr z,$-4		;repeat until we find a non-zero number
-		or a
-		 jr nz,$+3
-			dec hl
-		ret
-
-		ld de,numberString
-		ld l,e
-		ld h,d			;ld hl,numberString
-		ld b,0			;bc=# of leading 0s
-		add hl,bc		;hl points to first non-zero character
-		ld a,6			;string = 6 bytes, 5 characters + EOS byte
-		sub c
-		ld c,a			;bc = number of non-zero bytes
-		ldir			;essentially, for every 0, shift the number left one.
-		dec a
-		 jr nz,$+7
-			ex de,hl
-			ld (hl),a
-			dec hl
-			ld (hl),'0'
-;	pop hl
+nTS_clearZeros:
+	inc hl
+		ld a,(hl)
+		cp '0'			;ten ($0A) is the value of 0 in my alphabet (i think ASCII uses $30?)
+	 jr z,$-4		;repeat until we find a non-zero number
+	or a
+	 jr nz,$+3
+		dec hl
 	ret
 
 dN_b2d:
@@ -917,14 +898,7 @@ bigNumberToString:
 	call b2d
 	ld (ix),a		;put the terminating zero
 	ld hl,bigNumberString-1  ;where the string is stored
-		inc hl
-		ld a,(hl)
-		cp '0'		;if it's a 0, skip it
-	 jr z,$-4		;repeat until we find a non-zero number
-	or a
-	 jr nz,$+3		;if all numbers are zeros, move hl back one
-		dec hl		;.. to display one zero
-	ret
+	jr nTS_clearZeros
 
 ;#######################
 ;#B2D
