@@ -1,8 +1,7 @@
 startMenu:
-;erase the screen
-	call drawMap
-	call drawPlayer
-	xor a				;default option selected
+	call drawMap		; erase the screen [drawMap.asm]
+	call drawPlayer		; player was erased in the call above
+	xor a				; default option selected
 	ld hl,startMenuTxt
 	call drawMenu
 	call menuGetkey

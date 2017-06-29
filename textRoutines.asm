@@ -224,20 +224,26 @@ textWait:
 	exx
 	ret
 
+;--------
+;insertStat:
+;	insert player's stat in a string
+;--------
+; hl =	position in string
+; a  =	stat to check
 insertStat:
 	inc hl					;continue with the rest of the string
 	push hl
-		cp _NAME
+		cp _NAME			; [juego.asm]
 		 jr z,insertName
-		ld hl,playerData-3	;-2 for name, -1 because we start at 1 not 0 (0 = EOS)
-		ld e,a
+		ld hl,playerData-3	; -2 for name, -1 because we start at 1 not 0 (0 = EOS)
+		ld e,a				; de = stat id
 		ld d,0
-		add hl,de
+		add hl,de			; hl = offset in player's data
 		ld e,(hl)
 		inc hl
 		ld h,(hl)
-		ld l,e
-		cp _END
+		ld l,e				; hl = stat's value
+		cp _END				; all stats after endurance are 1 byte
 		 jr c,$+4
 			ld h,0			;if we are drawing END, CNC, SNC, or DSP, only display 1 byte
 		call numberToString
@@ -371,20 +377,20 @@ txtDisplayItem:
 ;		points to item id
 ;----------------
 txtDisplayItemD:
-	push hl
-		ld l,(hl)
+	push hl						; we need to pass hl back to vputsloop
+		ld l,(hl)				; item ID
 		ld h,0
 		add hl,hl
-		add hl,hl
-		ld de,itemList+2
+		add hl,hl				; x4
+		ld de,itemList+2		; first two bytes hold the item's price
 		add hl,de
-		getHL()
-		xor a
-		ld bc,100
-		cpir
-		call vputsLoop
+		getHL()					; HL = string address
+		xor a					; item format is "name",0,"description",0
+		ld bc,100				; .. so we search for a 0
+		cpir					; .. and go to the next byte
+		call vputsLoop			; add this text to the stack
 	pop hl
-	inc hl
+	inc hl						; skip the item id
 	ret
 
 txtNumber:
@@ -403,6 +409,12 @@ txtNumber8:
 	inc hl
 	ret
 
+;----------------
+;txtStat:
+;	
+;----------------
+; hl =	pointer to stat id
+;----------------
 txtStat:
 	ld a,(hl)
 	cp _DSP+1
@@ -812,31 +824,36 @@ numberToString:
 	exx
 	ld de,-10000	;check how many 10,000s there are in the number
 	call dN_b2d
-	ld de,-1000	 ;check how many 1,000s units there are
+	ld de,-1000		;check how many 1,000s units there are
 	call dN_b2d
-	ld de,-100	  ;hundreds
+	ld de,-100		;hundreds
 	call dN_b2d
 	ld de,-10		;tens
 	call dN_b2d
 	ld de,-1		;single digits
 	call dN_b2d
 
-	ld c,-1		 ;this part here removes the leading 0s
-	ld hl,numberString  ;where the string is stored
-	push hl
-		ld a,(hl)
-		inc c
-		inc hl
-		cp '0'			;ten ($0A) is the value of 0 in my alphabet (i think ASCII uses $30?)
-		 jr z,$-5		;repeat until we find a non-zero number
+	ld c,-1				;this part here removes the leading 0s
+;	ld hl,numberString  ;where the string is stored
+;	push hl
+	ld hl,numberString-1  ;where the string is stored
+			inc hl
+			ld a,(hl)
+			cp '0'			;ten ($0A) is the value of 0 in my alphabet (i think ASCII uses $30?)
+		 jr z,$-4		;repeat until we find a non-zero number
+		or a
+		 jr nz,$+3
+			dec hl
+		ret
+
 		ld de,numberString
 		ld l,e
-		ld h,d		  ;ld hl,numberString
-		ld b,0		  ;bc=# of leading 0s
+		ld h,d			;ld hl,numberString
+		ld b,0			;bc=# of leading 0s
 		add hl,bc		;hl points to first non-zero character
-		ld a,6		  ;string = 6 bytes, 5 characters + EOS byte
+		ld a,6			;string = 6 bytes, 5 characters + EOS byte
 		sub c
-		ld c,a		  ;bc = number of non-zero bytes
+		ld c,a			;bc = number of non-zero bytes
 		ldir			;essentially, for every 0, shift the number left one.
 		dec a
 		 jr nz,$+7
@@ -844,7 +861,7 @@ numberToString:
 			ld (hl),a
 			dec hl
 			ld (hl),'0'
-	pop hl
+;	pop hl
 	ret
 
 dN_b2d:
@@ -869,7 +886,7 @@ dN_b2dloop:
 ;# output: hl = pointer to converted string
 ;#######################
 bigNumberToString:
-	ld ix,numberString	;where we will store the result
+	ld ix,bigNumberString	;where we will store the result
 ;-10,000,000
 	ld c,$67
 	ld de,$6980
@@ -899,7 +916,7 @@ bigNumberToString:
 	ld e,-1
 	call b2d
 	ld (ix),a		;put the terminating zero
-	ld hl,numberString-1  ;where the string is stored
+	ld hl,bigNumberString-1  ;where the string is stored
 		inc hl
 		ld a,(hl)
 		cp '0'		;if it's a 0, skip it
