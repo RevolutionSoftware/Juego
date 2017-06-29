@@ -1,0 +1,4 @@
+#!/bin/bash
+spasm -I "map editor/inside" -I "map editor" -I "map editor/outside" juego.asm JUEGO.8xk -A -T
+sleep 1
+tilem2 JUEGO.8xk --full-speed -p macro/openapp
